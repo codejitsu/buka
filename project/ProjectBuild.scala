@@ -8,7 +8,7 @@ object ProjectBuild extends Build {
     id = "root",
     base = file("."),
     settings = parentSettings,
-    aggregate = Seq(bukaCore, bukaRest, bukaApp)
+    aggregate = Seq(bukaCore, bukaMongo, bukaRest, bukaApp)
   )
 
   lazy val bukaCore = Project(
@@ -17,17 +17,23 @@ object ProjectBuild extends Build {
     settings = defaultSettings ++ Seq(libraryDependencies ++= Dependencies.bukaCore)
   )
 
+  lazy val bukaMongo = Project(
+    id = "buka-mongo",
+    base = file("./buka-mongo"),
+    settings = defaultSettings ++ Seq(libraryDependencies ++= Dependencies.bukaMongo)
+  ).dependsOn(bukaCore)
+
   lazy val bukaRest = Project(
     id = "buka-rest",
     base = file("./buka-rest"),
     settings = defaultSettings ++ Seq(libraryDependencies ++= Dependencies.bukaRest)
-  ).dependsOn(bukaCore)
+  ).dependsOn(bukaMongo)
 
   lazy val bukaApp = Project(
     id = "buka-app",
     base = file("./buka-app"),
     settings = defaultSettings ++ Seq(libraryDependencies ++= Dependencies.bukaApp)
-  ).dependsOn(bukaCore)
+  ).dependsOn(bukaRest)
 }
 
 object Dependencies {
@@ -45,8 +51,6 @@ object Dependencies {
     val scalatest     = "org.scalatest"           %% "scalatest"            % ScalaTestVer      % "test"
     val scalacheck    = "org.scalacheck"          %% "scalacheck"           % ScalaCheckVer     % "test"
     val junit         = "junit"                    % "junit"                % JunitVer          % "test"
-
-    val abideExtra    = "com.typesafe"             % "abide-extra_2.11"     % AbideExtraVer     % "abide,test"
   }
 
   import Compile._
@@ -56,6 +60,7 @@ object Dependencies {
   /** Module deps */
 
   val bukaCore = Seq(config, ssh, logback, bouncy, jcraft) ++ test
+  val bukaMongo = Seq(config) ++ test
   val bukaRest = Seq(config) ++ test
   val bukaApp = Seq(config) ++ test
 }

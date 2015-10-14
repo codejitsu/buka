@@ -8,9 +8,6 @@ object Versions {
   val ScalaCheckVer     = "1.11.4"
   val JunitVer          = "4.10"
 
-  val AbideCoreVer      = "0.1-SNAPSHOT"
-  val AbideExtraVer     = "0.1-SNAPSHOT"
-
   val WartremoverVer    = "0.10"
 
   val ScalaSshVer       = "0.7.0"
