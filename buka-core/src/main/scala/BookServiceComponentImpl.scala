@@ -1,7 +1,11 @@
+// Copyright (C) 2015, codejitsu.
+
 package net.codejitsu.buka.service
 
 import net.codejitsu.buka.dao.BookDaoComponent
 import net.codejitsu.buka.entity.{Book, BookId}
+
+import scala.util.Try
 
 trait BookServiceComponentImpl {
   this: BookDaoComponent =>
@@ -9,7 +13,9 @@ trait BookServiceComponentImpl {
   val bookDao: BookDao
 
   class BookServiceImpl {
-    def getBook(id: BookId): Option[Book] = bookDao.getBook(id)
+    def addBook(book: Book): Try[Book] = bookDao.store(book)
+
+    def getBook(id: BookId): Option[Book] = bookDao.read(id)
   }
 }
 
