@@ -41,25 +41,23 @@ object Dependencies {
 
   object Compile {
     val config        = "com.typesafe"             % "config"               % TypesafeConfigVer
-    val ssh           = "com.decodified"          %% "scala-ssh"            % ScalaSshVer
     val logback       = "ch.qos.logback"           % "logback-classic"      % LogbackVer
-    val bouncy        = "org.bouncycastle"         % "bcprov-jdk16"         % "1.46"
-    val jcraft        = "com.jcraft"               % "jzlib"                % "1.1.3"
+    val scalaz        = "org.scalaz"              %% "scalaz-core"          % ScalazVer
   }
 
   object Test {
     val scalatest     = "org.scalatest"           %% "scalatest"            % ScalaTestVer      % "test"
     val scalacheck    = "org.scalacheck"          %% "scalacheck"           % ScalaCheckVer     % "test"
-    val junit         = "junit"                    % "junit"                % JunitVer          % "test"
   }
 
   import Compile._
+  import Test._
 
-  val test = Seq(Test.scalatest, Test.scalacheck, Test.junit)
+  val test = Seq(scalatest, scalacheck)
 
   /** Module deps */
 
-  val bukaCore = Seq(config, ssh, logback, bouncy, jcraft) ++ test
+  val bukaCore = Seq(config, logback, scalaz) ++ test
   val bukaMongo = Seq(config) ++ test
   val bukaRest = Seq(config) ++ test
   val bukaApp = Seq(config) ++ test
