@@ -3,7 +3,7 @@
 package net.codejitsu.buka.service
 
 import net.codejitsu.buka.dao.BookDaoComponent
-import net.codejitsu.buka.entity.{Book, BookId}
+import net.codejitsu.buka.entity.{Author, Book, BookId}
 import net.codejitsu.buka.service.validation.ConstraintViolation
 
 import scala.util.Try
@@ -16,6 +16,7 @@ trait BookServiceComponentImpl {
   val bookDao: BookDao
 
   class BookServiceImpl {
+    //TODO make an amazon call to obtain book information for given isbn
     def addBook(book: Book): Try[Book] = validate(book) match {
       case Success(validatedBook) => bookDao.store(validatedBook)
       case Failure(nelViolations) => scala.util.Failure(new BookServiceValidationException(nelViolations.toList))
@@ -25,15 +26,23 @@ trait BookServiceComponentImpl {
 
     private def validate(book: Book): ValidationNel[ConstraintViolation, Book] = {
       //TODO move all validation constraints into config
-      def validateTitle(): ValidationNel[ConstraintViolation, Book] = if (book.title.trim.isEmpty) {
+      def validateTitle(title: String): ValidationNel[ConstraintViolation, String] = if (title.trim.isEmpty) {
         ConstraintViolation("Title can't be empty", "book.title.length > 0").failureNel
-      } else if (book.title.trim.length > 255) {
+      } else if (title.trim.length > 255) {
         ConstraintViolation("Title is too long", "book.title.length < 255").failureNel
       } else {
-        book.successNel
+        title.successNel
       }
 
-      validateTitle()
+      def validateAuthors(authors: List[Author]): ValidationNel[ConstraintViolation, List[Author]] = if (authors.isEmpty) {
+        ConstraintViolation("Authors list can't be empty", "book.authors.length > 0").failureNel
+      } else if (authors.size > 20) {
+        ConstraintViolation("Authors list is too long", "book.authors.length <= 20").failureNel
+      } else {
+        authors.successNel
+      }
+
+      (validateTitle(book.title) |@| validateAuthors(book.authors)) { case _ => book }
     }
   }
 

@@ -14,4 +14,5 @@ final case class Book(id: BookId,
                       edition: Option[Int] = None,
                       numberPages: Option[Int] = None,
                       publicationYear: Option[Int] = None,
-                      tags: List[Tag] = List.empty)
+                      tags: List[Tag] = List.empty,
+                      copies: Int = 1)
