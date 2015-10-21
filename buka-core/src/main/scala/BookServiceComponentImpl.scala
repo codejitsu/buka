@@ -19,7 +19,7 @@ trait BookServiceComponentImpl {
     //TODO make an amazon call to obtain book information for given isbn
     def addBook(book: Book): Try[Book] = validate(book) match {
       case Success(validatedBook) => bookDao.store(validatedBook)
-      case Failure(nelViolations) => scala.util.Failure(new BookServiceValidationException(nelViolations.toList))
+      case Failure(violations) => scala.util.Failure(new BookServiceValidationException(violations.toList))
     }
 
     def getBook(id: BookId): Option[Book] = bookDao.read(id)
@@ -42,7 +42,22 @@ trait BookServiceComponentImpl {
         authors.successNel
       }
 
-      (validateTitle(book.title) |@| validateAuthors(book.authors)) { case _ => book }
+      def validateAuthorUniqueness(authors: List[Author]): ValidationNel[ConstraintViolation, List[Author]] = {
+        val authorSet = authors.map { author =>
+          author.copy(firstName = author.firstName.toLowerCase(), lastName = author.lastName.toLowerCase())
+        }.toSet
+
+        if (authors.size != authorSet.size) {
+          ConstraintViolation("There are some not unique authors in the list",
+            "Each author has to be unique in the list").failureNel
+        } else {
+          authors.successNel
+        }
+      }
+
+      (validateTitle(book.title) |@|
+       validateAuthors(book.authors) |@|
+       validateAuthorUniqueness(book.authors)) { case _ => book }
     }
   }
 

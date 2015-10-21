@@ -146,7 +146,58 @@ class BookServiceTest extends FlatSpec with Matchers {
     bookService.getBook(book.id) should be (Option(book))
   }
 
-  //TODO each author in the list has to be unique
+  "bookService" should "validate book's authors uniqueness on addition" in {
+    val authors = List(Author("First", "Second"), Author("First", "Second"))
+
+    val book = Book(BookId(UUID.randomUUID().toString), "my book", authors, Paperback)
+
+    val addResult = bookService.addBook(book)
+
+    addResult.isSuccess should be (false)
+
+    addResult match {
+      case Success(_) => fail("This call should produce an error.")
+
+      case Failure(BookServiceValidationException(violations)) =>
+        violations.size should be (1)
+
+        val titleViolation = violations.head
+
+        titleViolation.msg should be ("There are some not unique authors in the list")
+        titleViolation.constraint should be ("Each author has to be unique in the list")
+
+      case _ => fail("This call should produce a BookServiceValidationException.")
+    }
+
+    bookService.getBook(book.id) should be (None)
+  }
+
+  "bookService" should "validate book's authors uniqueness on addition (case insensitive)" in {
+    val authors = List(Author("First", "Second"), Author("first", "second"))
+
+    val book = Book(BookId(UUID.randomUUID().toString), "my book", authors, Paperback)
+
+    val addResult = bookService.addBook(book)
+
+    addResult.isSuccess should be (false)
+
+    addResult match {
+      case Success(_) => fail("This call should produce an error.")
+
+      case Failure(BookServiceValidationException(violations)) =>
+        violations.size should be (1)
+
+        val titleViolation = violations.head
+
+        titleViolation.msg should be ("There are some not unique authors in the list")
+        titleViolation.constraint should be ("Each author has to be unique in the list")
+
+      case _ => fail("This call should produce a BookServiceValidationException.")
+    }
+
+    bookService.getBook(book.id) should be (None)
+  }
+
   //TODO book id has to be unique
   //TODO book title + book type is unique
   //TODO test update field (all fields)
