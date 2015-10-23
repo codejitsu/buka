@@ -198,7 +198,32 @@ class BookServiceTest extends FlatSpec with Matchers {
     bookService.getBook(book.id) should be (None)
   }
 
-  //TODO book id has to be unique
+  "bookService" should "check if book id is unique" in {
+    val authors = List(Author("First", "Second"))
+
+    val book = Book(BookId(UUID.randomUUID().toString), "my book", authors, Paperback)
+
+    val addResult = bookService.addBook(book)
+
+    addResult.isSuccess should be (true)
+
+    val addAgainResult = bookService.addBook(book)
+
+    addAgainResult.isSuccess should be (false)
+
+    addAgainResult match {
+      case Success(_) => fail("This call should produce an error.")
+
+      case Failure(BookAlreadyExistsDaoException(bookId, bookTitle)) =>
+        bookId should be (book.id)
+        bookTitle should be (book.title)
+
+      case _ => fail("This call should produce a BookAlreadyExistsDaoException.")
+    }
+
+    bookService.getBook(book.id) should be (Option(book))
+  }
+
   //TODO book title + book type is unique
   //TODO test update field (all fields)
   //TODO test remove field (all fields)

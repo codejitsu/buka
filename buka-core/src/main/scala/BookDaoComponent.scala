@@ -13,4 +13,6 @@ trait BookDaoComponent {
   }
 
   class BookDaoException(msg: String) extends Exception(msg)
+
+  case class BookAlreadyExistsDaoException(id: BookId, title: String) extends BookDaoException("book already exists")
 }
