@@ -17,8 +17,10 @@ trait BookServiceComponentImpl {
 
   class BookServiceImpl {
     //TODO make an amazon call to obtain book information for given isbn
-    def addBook(book: Book): Try[Book] = validate(book) match {
-      case Success(validatedBook) => bookDao.store(validatedBook)
+    def addBook(book: Book): Try[(Book, List[String])] = validate(book) match {
+      case Success(validatedBook) => bookDao.store(validatedBook).map { book =>
+        (book, Nil)
+      }
       case Failure(violations) => scala.util.Failure(new BookServiceValidationException(violations.toList))
     }
 

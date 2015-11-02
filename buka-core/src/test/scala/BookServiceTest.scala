@@ -14,18 +14,19 @@ class BookServiceTest extends FlatSpec with Matchers {
   val bookDao = TestComponentRegistry.bookDao
 
   "bookService" should "provide addBook method" in {
-    val book = Book(BookId(UUID.randomUUID().toString), "Test book", List(Author("First", "Author")), Paperback)
+    val book = Book(BookId(UUID.randomUUID().toString), "Test book", List(Author("First", "Author")), Paperback, 2015)
 
     val addResult = bookService.addBook(book)
 
     addResult.isSuccess should be (true)
-    addResult.get should be (book)
+    addResult.get._1 should be (book)
+    addResult.get._2 should be (empty)
 
     bookService.getBook(book.id) should be (Option(book))
   }
 
   "bookService" should "validate book's title min length on addition" in {
-    val book = Book(BookId(UUID.randomUUID().toString), "", List(Author("First", "Author")), Paperback)
+    val book = Book(BookId(UUID.randomUUID().toString), "", List(Author("First", "Author")), Paperback, 2015)
 
     val addResult = bookService.addBook(book)
 
@@ -49,7 +50,7 @@ class BookServiceTest extends FlatSpec with Matchers {
   }
 
   "bookService" should "validate book's title max length on addition" in {
-    val book = Book(BookId(UUID.randomUUID().toString), "T" * 1000, List(Author("First", "Author")), Paperback)
+    val book = Book(BookId(UUID.randomUUID().toString), "T" * 1000, List(Author("First", "Author")), Paperback, 2015)
 
     val addResult = bookService.addBook(book)
 
@@ -73,18 +74,19 @@ class BookServiceTest extends FlatSpec with Matchers {
   }
 
   "bookService" should "accept title length up to 255 characters" in {
-    val book = Book(BookId(UUID.randomUUID().toString), "T" * 255, List(Author("First", "Author")), Paperback)
+    val book = Book(BookId(UUID.randomUUID().toString), "T" * 255, List(Author("First", "Author")), Paperback, 2015)
 
     val addResult = bookService.addBook(book)
 
     addResult.isSuccess should be (true)
-    addResult.get should be (book)
+    addResult.get._1 should be (book)
+    addResult.get._2 should be (empty)
 
     bookService.getBook(book.id) should be (Option(book))
   }
 
   "bookService" should "validate book's authors list min length on addition" in {
-    val book = Book(BookId(UUID.randomUUID().toString), "my book", List(), Paperback)
+    val book = Book(BookId(UUID.randomUUID().toString), "my book", List(), Paperback, 2015)
 
     val addResult = bookService.addBook(book)
 
@@ -110,7 +112,7 @@ class BookServiceTest extends FlatSpec with Matchers {
   "bookService" should "validate book's authors max length on addition" in {
     val authors = (1 to 25) map (_ => Author(UUID.randomUUID().toString, UUID.randomUUID().toString))
 
-    val book = Book(BookId(UUID.randomUUID().toString), "my book", authors.toList, Paperback)
+    val book = Book(BookId(UUID.randomUUID().toString), "my book", authors.toList, Paperback, 2015)
 
     val addResult = bookService.addBook(book)
 
@@ -136,12 +138,13 @@ class BookServiceTest extends FlatSpec with Matchers {
   "bookService" should "accept authors length up to 20 authors" in {
     val authors = (1 to 20) map (_ => Author(UUID.randomUUID().toString, UUID.randomUUID().toString))
 
-    val book = Book(BookId(UUID.randomUUID().toString), "my book", authors.toList, Paperback)
+    val book = Book(BookId(UUID.randomUUID().toString), "my book", authors.toList, Paperback, 2015)
 
     val addResult = bookService.addBook(book)
 
     addResult.isSuccess should be (true)
-    addResult.get should be (book)
+    addResult.get._1 should be (book)
+    addResult.get._2 should be (empty)
 
     bookService.getBook(book.id) should be (Option(book))
   }
@@ -149,7 +152,7 @@ class BookServiceTest extends FlatSpec with Matchers {
   "bookService" should "validate book's authors uniqueness on addition" in {
     val authors = List(Author("First", "Second"), Author("First", "Second"))
 
-    val book = Book(BookId(UUID.randomUUID().toString), "my book", authors, Paperback)
+    val book = Book(BookId(UUID.randomUUID().toString), "my book", authors, Paperback, 2015)
 
     val addResult = bookService.addBook(book)
 
@@ -175,7 +178,7 @@ class BookServiceTest extends FlatSpec with Matchers {
   "bookService" should "validate book's authors uniqueness on addition (case insensitive)" in {
     val authors = List(Author("First", "Second"), Author("first", "second"))
 
-    val book = Book(BookId(UUID.randomUUID().toString), "my book", authors, Paperback)
+    val book = Book(BookId(UUID.randomUUID().toString), "my book", authors, Paperback, 2015)
 
     val addResult = bookService.addBook(book)
 
@@ -201,7 +204,7 @@ class BookServiceTest extends FlatSpec with Matchers {
   "bookService" should "check if book id is unique" in {
     val authors = List(Author("First", "Second"))
 
-    val book = Book(BookId(UUID.randomUUID().toString), "my book", authors, Paperback)
+    val book = Book(BookId(UUID.randomUUID().toString), "my book", authors, Paperback, 2015)
 
     val addResult = bookService.addBook(book)
 
@@ -224,8 +227,31 @@ class BookServiceTest extends FlatSpec with Matchers {
     bookService.getBook(book.id) should be (Option(book))
   }
 
-  //TODO book title + book type is unique
+  "bookService" should "check if book title + book type + pub year is unique" in {
+    val authors = List(Author("First", "Second"))
+
+    val firstId = UUID.randomUUID().toString
+
+    val book = Book(BookId(firstId), "my book", authors, Paperback, 2015)
+
+    val addResult = bookService.addBook(book)
+
+    addResult.isSuccess should be (true)
+
+    val addAgainResult = bookService.addBook(book.copy(id = BookId(UUID.randomUUID().toString)))
+
+    addAgainResult.isSuccess should be (true)
+
+    addAgainResult.get._2 should contain ("Possible duplicate: my book (" + firstId +  ")")
+
+    bookService.getBook(book.id).get.copies should be (2)
+  }
+
+  //TODO book title + book type + pub year is unique
   //TODO test update field (all fields)
   //TODO test remove field (all fields)
   //TODO consider the same return type for all service operations (Try or Option, Future)
+  //TODO start/stop/pause book reading
+  //TODO get list of books which I am currently reading
+  //TODO calculate velocity per book or general reading velocity
 }
