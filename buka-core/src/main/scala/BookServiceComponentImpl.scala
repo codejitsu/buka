@@ -3,7 +3,7 @@
 package net.codejitsu.buka.service
 
 import net.codejitsu.buka.dao.BookDaoComponent
-import net.codejitsu.buka.entity.{Author, Book, BookId}
+import net.codejitsu.buka.entity.{BookType, Author, Book, BookId}
 import net.codejitsu.buka.service.validation.ConstraintViolation
 
 import scala.util.Try
@@ -57,9 +57,35 @@ trait BookServiceComponentImpl {
         }
       }
 
-      (validateTitle(book.title) |@|
+      def validateBookId(bookId: BookId): ValidationNel[ConstraintViolation, BookId] = {
+        val lookUp = bookDao.read(bookId)
+
+        lookUp match {
+          case Some(_) =>
+            ConstraintViolation("A book with same id found",
+              "Each book id should be unique").failureNel
+
+          case None => bookId.successNel
+        }
+      }
+
+      def validateTitleAndType(title: String, bookType: BookType): ValidationNel[ConstraintViolation, (String, BookType)] = {
+        val lookUp = bookDao.searchBy(title, bookType)
+
+        lookUp match {
+          case Some(_) =>
+            ConstraintViolation("A book with same title and type found",
+              "Each book should be unique").failureNel
+
+          case None => (title, bookType).successNel
+        }
+      }
+
+      (validateBookId(book.id) |@|
+       validateTitle(book.title) |@|
        validateAuthors(book.authors) |@|
-       validateAuthorUniqueness(book.authors)) { case _ => book }
+       validateAuthorUniqueness(book.authors) |@|
+       validateTitleAndType(book.title, book.bookType)) { case _ => book }
     }
   }
 

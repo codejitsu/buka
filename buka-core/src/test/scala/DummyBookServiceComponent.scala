@@ -1,7 +1,7 @@
 package net.codejitsu.buka.service
 
 import net.codejitsu.buka.dao.BookDaoComponent
-import net.codejitsu.buka.entity.{Book, BookId}
+import net.codejitsu.buka.entity.{BookType, Book, BookId}
 
 import scala.util.{Failure, Success, Try}
 
@@ -19,6 +19,11 @@ trait TestBookDaoComponentImpl extends BookDaoComponent {
         case None => Failure(new BookDaoException("Error by store book"))
       }
     }(_ => Failure(new BookAlreadyExistsDaoException(book.id, book.title)))
+
+    override def searchBy(title: String, bookType: BookType): Option[Book] =
+      books.values.find(b => b.title.toLowerCase == title.toLowerCase && b.bookType == bookType)
+
+    def clean(): Unit = books.clear()
   }
 }
 

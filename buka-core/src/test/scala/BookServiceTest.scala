@@ -3,15 +3,19 @@ package net.codejitsu.buka.service
 import java.util.UUID
 
 import net.codejitsu.buka.entity.{Paperback, Author, BookId, Book}
-import org.scalatest.{Matchers, FlatSpec}
+import org.scalatest.{BeforeAndAfter, Matchers, FlatSpec}
 
 import scala.util.{Failure, Success}
 
 import TestComponentRegistry._
 
-class BookServiceTest extends FlatSpec with Matchers {
+class BookServiceTest extends FlatSpec with Matchers with BeforeAndAfter {
   val bookService = TestComponentRegistry.bookService
   val bookDao = TestComponentRegistry.bookDao
+
+  before {
+    bookDao.clean()
+  }
 
   "bookService" should "provide addBook method" in {
     val book = Book(BookId(UUID.randomUUID().toString), "Test book", List(Author("First", "Author")), Paperback, 2015)
