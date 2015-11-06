@@ -221,11 +221,15 @@ class BookServiceTest extends FlatSpec with Matchers with BeforeAndAfter {
     addAgainResult match {
       case Success(_) => fail("This call should produce an error.")
 
-      case Failure(BookAlreadyExistsDaoException(bookId, bookTitle)) =>
-        bookId should be (book.id)
-        bookTitle should be (book.title)
+      case Failure(BookServiceValidationException(violations)) =>
+        violations.size should be (2) //same id + same title/type
 
-      case _ => fail("This call should produce a BookAlreadyExistsDaoException.")
+        val titleViolation = violations.head
+
+        titleViolation.msg should be ("A book with same id found")
+        titleViolation.constraint should be ("Each book id should be unique")
+
+      case _ => fail("This call should produce a BookServiceValidationException.")
     }
 
     bookService.getBook(book.id) should be (Option(book))
@@ -244,14 +248,27 @@ class BookServiceTest extends FlatSpec with Matchers with BeforeAndAfter {
 
     val addAgainResult = bookService.addBook(book.copy(id = BookId(UUID.randomUUID().toString)))
 
-    addAgainResult.isSuccess should be (true)
+    addAgainResult.isSuccess should be (false)
 
-    addAgainResult.get._2 should contain ("Possible duplicate: my book (" + firstId +  ")")
+    addAgainResult match {
+      case Success(_) => fail("This call should produce an error.")
 
-    bookService.getBook(book.id).get.copies should be (2)
+      case Failure(BookServiceValidationException(violations)) =>
+        violations.size should be (1)
+
+        val titleViolation = violations.head
+
+        titleViolation.msg should be ("A book with same title and type found")
+        titleViolation.constraint should be ("Each book should be unique")
+
+      case _ => fail("This call should produce a BookServiceValidationException.")
+    }
+
+    bookService.getBook(book.id).get.copies should be (1)
   }
 
   //TODO book title + book type + pub year is unique
+  //TODO add book duplicate test
   //TODO test update field (all fields)
   //TODO test remove field (all fields)
   //TODO consider the same return type for all service operations (Try or Option, Future)
